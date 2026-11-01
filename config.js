@@ -1,8 +1,8 @@
-// Add this website's Supabase Project URL and Publishable key here.
-// Never put a Supabase Secret key or service_role key in this public file.
+// Supabase project connection for Muhammad Anas portfolio.
+// This is a public publishable key; never use a Secret/service_role key here.
 window.PORTFOLIO_CONFIG = {
-  supabaseUrl: "https://YOUR-PROJECT-REF.supabase.co",
-  supabaseAnonKey: "YOUR_SUPABASE_PUBLISHABLE_KEY",
+  supabaseUrl: "https://qqxwdqktanuwswtmhkad.supabase.co",
+  supabaseAnonKey: "sb_publishable_0z5qOrmXDo4-kBSufnuQvw_3NEmJpKQ",
   storageBucket: "portfolio-images",
   name: "Muhammad Anas",
   email: "your.email@example.com",

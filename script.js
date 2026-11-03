@@ -29,6 +29,13 @@ async function loadSettings(){
  settings={...defaults,...(data?.settings||{})};
  applySettings();
 }
+let pageEditMode=false;
+function applySavedPageTexts(){
+ const saved=settings.page_texts||{};
+ Object.entries(saved).forEach(([id,text])=>{const el=document.querySelector(`[data-page-edit-id="${CSS.escape(id)}"]`);if(el)el.textContent=text;});
+ const styles=settings.page_text_styles||{};
+ Object.entries(styles).forEach(([id,st])=>{const el=document.querySelector(`[data-page-edit-id="${CSS.escape(id)}"]`);if(el&&st){if(st.color)el.style.color=st.color;if(st.fontSize)el.style.fontSize=st.fontSize;if(st.fontFamily)el.style.fontFamily=st.fontFamily;if(st.fontWeight)el.style.fontWeight=st.fontWeight;}});
+}
 function applySettings(){
  document.documentElement.style.setProperty("--bg",settings.bg_color||defaults.bg_color);
  document.documentElement.style.setProperty("--accent",settings.accent_color||defaults.accent_color);
@@ -45,6 +52,8 @@ function applySettings(){
  $("emailLink").href=`mailto:${settings.email||""}`; $("emailText").href=`mailto:${settings.email||""}`; $("emailText").textContent=settings.email||"Add your email in Admin";
  $("footerName").textContent=(settings.name||defaults.name).toUpperCase();
  $("socials").innerHTML=(settings.socials||[]).filter(s=>s.label&&s.url).map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a>`).join("");
+ if($("logoPreview"))$("logoPreview").src=settings.logo_text?.startsWith("http")?settings.logo_text:"";
+ applySavedPageTexts();
  if(settings.favicon_url){let f=document.querySelector('link[rel="icon"]');if(!f){f=document.createElement("link");f.rel="icon";document.head.append(f)}f.href=settings.favicon_url;}
 }
 async function loadArtworks(){
@@ -102,6 +111,18 @@ async function login(){
  if(error){toast("Sign-in failed: "+error.message);return;}
  $("adminPassword").value="";await checkSession();toast("Admin signed in.");
 }
+
+async function changeAdminPassword(){
+ const password=$("newAdminPassword").value,confirm=$("confirmAdminPassword").value;
+ if(password.length<8){toast("Password must be at least 8 characters.");return;}
+ if(password!==confirm){toast("The passwords do not match.");return;}
+ const btn=$("changePasswordBtn");btn.disabled=true;$("passwordStatus").textContent="Updating password…";
+ const {error}=await supabase.auth.updateUser({password});
+ btn.disabled=false;
+ if(error){$("passwordStatus").textContent="Password update failed.";toast("Could not change password: "+error.message);return;}
+ $("newAdminPassword").value="";$("confirmAdminPassword").value="";
+ $("passwordStatus").textContent="Password changed successfully.";toast("Admin password changed successfully.");
+}
 async function logout(){await supabase.auth.signOut();signedIn=false;await checkSession();toast("Signed out.");}
 function fillSettingsForm(){
  const map={setName:"name",setLogo:"logo_text",setFavicon:"favicon_url",setEmail:"email",setHeroTitle:"hero_title",setHeroSubtitle:"hero_subtitle",setAboutTitle:"about_title",setAboutText:"about_text",setBg:"bg_color",setAccent:"accent_color",setAccent2:"accent2_color",setText:"text_color",setFont:"font_family"};
@@ -109,7 +130,7 @@ function fillSettingsForm(){
  $("setSocials").value=(settings.socials||[]).map(s=>`${s.label} | ${s.url}`).join("\n");
 }
 function readSettingsForm(){
- const v={...settings};
+ const v={...settings,page_texts:{...(settings.page_texts||{})},page_text_styles:{...(settings.page_text_styles||{})}};
  const map={setName:"name",setLogo:"logo_text",setFavicon:"favicon_url",setEmail:"email",setHeroTitle:"hero_title",setHeroSubtitle:"hero_subtitle",setAboutTitle:"about_title",setAboutText:"about_text",setBg:"bg_color",setAccent:"accent_color",setAccent2:"accent2_color",setText:"text_color",setFont:"font_family"};
  Object.entries(map).forEach(([id,key])=>v[key]=$(id).value.trim());
  v.socials=$("setSocials").value.split("\n").map(line=>{const i=line.indexOf("|");return i<0?null:{label:line.slice(0,i).trim(),url:line.slice(i+1).trim()}}).filter(x=>x&&x.label&&/^https?:\/\//i.test(x.url));
@@ -183,6 +204,47 @@ async function uploadMedia(){
  $("mediaFiles").value="";$("uploadStatus").textContent="Upload complete. Refreshing gallery…";
  await loadArtworks();await loadAdminMedia();$("uploadMediaBtn").disabled=false;$("uploadStatus").textContent="Upload limit: 50 MB per image or video. Images: JPG, PNG, WebP. Video: MP4 (H.264) or WebM. Keep files optimized for fast loading.";toast("Upload process finished.");
 }
+function setupPageTextEditor(){
+ const candidates=[...document.querySelectorAll("body *")].filter(el=>{
+  if(el.closest(".admin-overlay,.lightbox,#toast,script,style"))return false;
+  if(el.children.length>0)return false;
+  return (el.textContent||"").trim().length>0;
+ });
+ candidates.forEach((el,i)=>{if(!el.dataset.pageEditId)el.dataset.pageEditId="text-"+i;});
+ $("togglePageEdit").onclick=()=>{
+  pageEditMode=!pageEditMode;document.body.classList.toggle("page-edit-mode",pageEditMode);
+  $("togglePageEdit").textContent=pageEditMode?"✎ Edit Page Text: ON (click text)":"✎ Edit Page Text: OFF";
+  toast(pageEditMode?"Click any text on the website to edit it.":"Text editing disabled.");
+ };
+ document.addEventListener("click",e=>{
+  if(!pageEditMode||e.target.closest(".admin-overlay,.lightbox,#toast"))return;
+  const el=e.target.closest("[data-page-edit-id]");if(!el)return;
+  e.preventDefault();e.stopPropagation();
+  const val=prompt("Edit this text:",el.textContent);if(val===null)return;
+  el.textContent=val;settings.page_texts=settings.page_texts||{};settings.page_texts[el.dataset.pageEditId]=val;
+  const color=prompt("Text color (CSS color / hex, blank = keep current):","");
+  const size=prompt("Font size (e.g. 24px, 2rem, blank = keep current):","");
+  const font=prompt("Font family (Manrope, Poppins, Montserrat, Roboto, Arial, blank = keep current):","");
+  const weight=prompt("Font weight (400, 600, 800, blank = keep current):","");
+  settings.page_text_styles=settings.page_text_styles||{};const st=settings.page_text_styles[el.dataset.pageEditId]||{};
+  if(color){st.color=color;el.style.color=color;}if(size){st.fontSize=size;el.style.fontSize=size;}if(font){st.fontFamily=font;el.style.fontFamily=font;}if(weight){st.fontWeight=weight;el.style.fontWeight=weight;}
+  settings.page_text_styles[el.dataset.pageEditId]=st;
+ },true);
+}
+async function uploadLogoImage(){
+ const file=$("logoImageFile").files[0];if(!file)return;
+ if(!file.type.startsWith("image/")){toast("Choose an image file.");return;}
+ if(file.size>10*1024*1024){toast("Logo maximum size is 10 MB.");return;}
+ $("logoUploadStatus").textContent="Uploading logo…";
+ const path=`site-assets/logo-${Date.now()}-${file.name.replace(/[^a-z0-9.-]/gi,"-")}`;
+ const bucket=supabase.storage.from(cfg.storageBucket||"portfolio-images");
+ const {error}=await bucket.upload(path,file,{upsert:false,contentType:file.type});
+ if(error){$("logoUploadStatus").textContent="Upload failed: "+error.message;return;}
+ const url=bucket.getPublicUrl(path).data.publicUrl;
+ $("setLogo").value=url;$("logoPreview").src=url;settings.logo_text=url;applySettings();
+ $("logoUploadStatus").textContent="Uploaded. Click Save website changes to publish.";
+ toast("Logo image uploaded.");
+}
 function initTabs(){
  document.querySelectorAll(".admin-tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".admin-tabs button").forEach(x=>x.classList.toggle("active",x===b));
@@ -193,7 +255,7 @@ function initUI(){
  $("year").textContent=new Date().getFullYear();
  $("manageBtn").onclick=showAdmin;$("adminClose").onclick=hideAdmin;$("adminOverlay").addEventListener("click",e=>{if(e.target===$("adminOverlay"))hideAdmin()});
  $("loginBtn").onclick=login;$("logoutBtn").onclick=logout;$("saveSettingsBtn").onclick=saveSettings;$("uploadMediaBtn").onclick=uploadMedia;
- $("adminCategory").onchange=loadAdminMedia;initAdminCategories();initTabs();
+ $("adminCategory").onchange=loadAdminMedia;$("changePasswordBtn").onclick=changeAdminPassword;initAdminCategories();initTabs();setupPageTextEditor();$("logoImageFile").addEventListener("change",uploadLogoImage);
  $("closeLightbox").onclick=closeLightbox;$("lightbox").addEventListener("click",e=>{if(e.target===$("lightbox"))closeLightbox()});
  document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeLightbox();hideAdmin()}});
  $("hamb").onclick=()=>$("nav").classList.toggle("open");document.querySelectorAll("nav a").forEach(a=>a.onclick=()=>$("nav").classList.remove("open"));

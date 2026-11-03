@@ -92,3 +92,5 @@ TROUBLESHOOTING
   the storage policies in the SQL file have been applied.
 - For GitHub Pages, upload the files at the repository root, not inside an
   extra nested folder.
+
+NEW EDITOR FEATURES: Website & Theme tab includes click-to-edit page text for most visible text nodes, image upload for logo through Supabase Storage, and extra font choices. Save changes after editing.

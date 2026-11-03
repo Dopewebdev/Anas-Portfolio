@@ -66,6 +66,10 @@
    </div>
    <div id="siteTab" class="admin-tab" hidden>
     <h3>Branding, content & theme</h3>
+    <p class="admin-help">Edit even the smallest text: turn on Edit Page Text, click any text on the public page, edit it, then Save.</p>
+    <div class="upload-row"><button class="secondary" id="togglePageEdit">✎ Edit Page Text: OFF</button><label class="upload-btn" for="logoImageFile">＋ Upload Logo Image</label><input id="logoImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"></div>
+    <p class="admin-help" id="logoUploadStatus">Upload a logo image directly; no URL needed.</p>
+    <img id="logoPreview" style="max-width:180px;max-height:80px;object-fit:contain;background:#101620;padding:8px" alt="Logo preview">
     <div class="settings-grid">
      <label>Website / artist name<input id="setName" type="text"></label>
      <label>Logo text or image URL<input id="setLogo" type="text" placeholder="ANAS. or https://..."></label>
@@ -80,11 +84,19 @@
      <label>Accent / neon color<input id="setAccent" type="color"></label>
      <label>Secondary accent<input id="setAccent2" type="color"></label>
      <label>Text color<input id="setText" type="color"></label>
-     <label>Font<select id="setFont"><option value="Manrope">Manrope</option><option value="DM Sans">DM Sans</option><option value="Arial">Arial</option></select></label>
+     <label>Font<select id="setFont"><option value="Manrope">Manrope</option><option value="DM Sans">DM Sans</option><option value="Arial">Arial</option><option value="Poppins">Poppins</option><option value="Montserrat">Montserrat</option><option value="Roboto">Roboto</option><option value="Playfair Display">Playfair Display</option><option value="Oswald">Oswald</option><option value="Inter">Inter</option></select></label>
     </div>
     <div class="settings-actions"><button class="primary" id="saveSettingsBtn">Save website changes</button><span id="settingsStatus" class="admin-help"></span></div>
    </div>
-   <div id="accountTab" class="admin-tab" hidden><h3>Admin account</h3><p class="admin-help">Change the admin password through the sign-in email's password reset flow, or sign out here. Keep GitHub and Supabase owner access private.</p><button class="secondary" id="logoutBtn">Sign out</button></div>
+   <div id="accountTab" class="admin-tab" hidden><h3>Admin account</h3>
+    <p class="admin-help">Change the password for the currently signed-in Supabase admin account. Use a strong password and keep it private.</p>
+    <div class="settings-grid password-grid">
+     <label>New password<input id="newAdminPassword" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters"></label>
+     <label>Confirm new password<input id="confirmAdminPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Repeat new password"></label>
+    </div>
+    <div class="settings-actions"><button class="primary" id="changePasswordBtn">Change admin password</button><span id="passwordStatus" class="admin-help"></span></div>
+    <p class="admin-help">After changing it, use the new password next time you sign in. This changes the Supabase Auth password, not your GitHub password.</p>
+    <button class="secondary" id="logoutBtn">Sign out</button></div>
   </div>
  </section>
 </div>

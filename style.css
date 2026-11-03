@@ -89,3 +89,5 @@ h1 em,h2 em,.logo span{color:var(--accent)}
 .toast{position:fixed;z-index:2000;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#241633;border:1px solid var(--accent);color:white;padding:12px 18px;border-radius:10px;transition:.2s;max-width:90vw}.toast.show{opacity:1;transform:translate(-50%,0)}
 [hidden]{display:none!important}
 @media(max-width:650px){.settings-grid{grid-template-columns:1fr}.admin-box{padding:18px}.admin-media-row{grid-template-columns:52px 1fr auto}.admin-media-row img{width:52px;height:48px}.admin-media-row .delete-btn{grid-column:3}.admin-top h2{font-size:24px}}
+
+body.page-edit-mode [data-page-edit-id]{outline:1px dashed #bd5cff!important;outline-offset:3px;cursor:text!important}body.page-edit-mode [data-page-edit-id]:hover{background:#bd5cff22!important}#logoPreview{border:1px solid var(--line);border-radius:4px}
